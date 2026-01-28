@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DemoWebAPI.DB.Model;
 using DemoWebAPI.DB.Models;
+using DemoWebAPI.DB.IRepository;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace DemoWebAPI.API.Controllers
 {
@@ -14,32 +16,40 @@ namespace DemoWebAPI.API.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly Context _context;
+        private readonly IProductRepository _productRepository;
 
-        public ProductsController(Context context)
+        public ProductsController(IProductRepository productRepository)
         {
-            _context = context;
+            _productRepository = productRepository;
         }
 
         // GET: api/Products
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return await _context.Products.ToListAsync();
+            var list = await _productRepository.GetAllProduct();
+            if (list != null)
+            {
+                return Ok(list);
+            }
+            else
+            {
+                return BadRequest();
+            }
         }
 
         // GET: api/Products/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product =await _productRepository.GetProductAsync(id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
-            return product;
+            return Ok(product);
         }
 
         // PUT: api/Products/5
@@ -47,30 +57,15 @@ namespace DemoWebAPI.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
-            if (id != product.Id)
+            if (id == 0)
             {
                 return BadRequest();
             }
-
-            _context.Entry(product).State = EntityState.Modified;
-
-            try
+            else
             {
-                await _context.SaveChangesAsync();
+                await _productRepository.UpdateProduct(id, product);
+                return Ok( );
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
         }
 
         // POST: api/Products
@@ -78,31 +73,24 @@ namespace DemoWebAPI.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+            if (ModelState.IsValid)
+            {
+                await _productRepository.CreateProduct(product);
+                return Ok();
+            }
+            return BadRequest();
         }
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            if (id <= 0)
             {
-                return NotFound();
+                return BadRequest();
             }
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
+            await _productRepository.DeleteProduct(id);
+            return Ok();
         }
     }
 }

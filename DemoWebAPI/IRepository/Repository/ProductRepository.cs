@@ -53,14 +53,23 @@ namespace DemoWebAPI.DB.IRepository.Repository
             return await _context.Products.FindAsync(id);
         }
 
-        public async Task UpdateProduct(Product product)
+        public async Task UpdateProduct(int id, Product product)
         {
             try
             {
-                _context.Products.Update(product);
-                await _context.SaveChangesAsync();
+                var findproduct = await _context.Products.FindAsync(id);
+                if (findproduct != null)
+                {
+                    findproduct.Name = product.Name;
+                    findproduct.Price = product.Price;
+                    findproduct.quantity = product.quantity;
+
+                    await _context.SaveChangesAsync();
+
+                }
+                await Task.FromResult(product);
             }
-            catch
+            catch(Exception)
             {
                 throw;
             }

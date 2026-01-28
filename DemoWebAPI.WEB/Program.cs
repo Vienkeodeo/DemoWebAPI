@@ -1,3 +1,5 @@
+using DemoWebAPI.DB.IRepository;
+using DemoWebAPI.DB.IRepository.Repository;
 using DemoWebAPI.DB.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +15,8 @@ builder.Services.AddDbContext<Context>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+builder.Services.AddTransient<IProductRepository,ProductRepository>();
 
 var app = builder.Build();
 

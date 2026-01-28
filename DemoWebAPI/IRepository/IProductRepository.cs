@@ -12,6 +12,6 @@ namespace DemoWebAPI.DB.IRepository
 
         Task DeleteProduct(int id);
 
-        Task UpdateProduct(Product product);
+        Task UpdateProduct(int id, Product product);
     }
 }
